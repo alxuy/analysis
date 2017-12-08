@@ -1,3 +1,5 @@
+import com.aliasi.classify.Classification;
+import com.aliasi.classify.Classified;
 import com.aliasi.classify.DynamicLMClassifier;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -32,9 +34,14 @@ public class main {
             document = (Document) projects.get(i);
             contents.add((String) document.get("content"));
         }
-        for (int i = 0; i < 4; i++) {
-            System.out.println(i);
-            System.out.println(contents.get(i));
+
+        for(int i = 0; i<CATEGORIES.length;i++){
+            for(int j = 0; j<contents.size();j++){
+                Classification classification = new Classification(CATEGORIES[i]);
+                Classified<CharSequence> classified = new Classified<CharSequence>(contents.get(j), classification);
+                classifier.handle(classified);
+            }
         }
+
     }
 }
