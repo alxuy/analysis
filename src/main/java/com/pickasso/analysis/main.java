@@ -1,3 +1,4 @@
+package com.pickasso.analysis;
 import com.aliasi.classify.*;
 import com.aliasi.util.AbstractExternalizable;
 import com.mongodb.MongoClient;
