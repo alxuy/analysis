@@ -3,6 +3,7 @@ import com.aliasi.sentences.MedlineSentenceModel;
 import com.aliasi.sentences.SentenceModel;
 
 import com.aliasi.tokenizer.IndoEuropeanTokenizerFactory;
+import com.aliasi.tokenizer.RegExTokenizerFactory;
 import com.aliasi.tokenizer.TokenizerFactory;
 import com.aliasi.tokenizer.Tokenizer;
 
@@ -21,8 +22,7 @@ import java.util.stream.Collectors;
 /** Use SentenceModel to find sentence boundaries in text */
 public class WordCount {
 
-    static final TokenizerFactory TOKENIZER_FACTORY = IndoEuropeanTokenizerFactory.INSTANCE;
-    static final SentenceModel SENTENCE_MODEL  = new MedlineSentenceModel();
+    static final TokenizerFactory TOKENIZER_FACTORY = new RegExTokenizerFactory("(-|'|\\d|\\p{L})+|\\S");
 
 //    public class CountWord {
 //    	private String word;
@@ -63,21 +63,7 @@ public class WordCount {
 	String[] whites = new String[whiteList.size()];
 	tokenList.toArray(tokens);
 	whiteList.toArray(whites);
-	int[] sentenceBoundaries = SENTENCE_MODEL.boundaryIndices(tokens,whites);
-
-	System.out.println(sentenceBoundaries.length 
-			   + " SENTENCE END TOKEN OFFSETS");
-		
-	if (sentenceBoundaries.length < 1) {
-	    System.out.println("No sentence boundaries found.");
-	    return;
-	}
-	int sentStartTok = 0;
-	int sentEndTok = 0;
 	
-//	tokenList.stream().map(token -> {
-//		System.out.print(token);
-//	}).collect(Collectors.toList());
 	List<String> tokenUnic = new ArrayList<String>();
 	List<Integer> tokenCount = new ArrayList<Integer>();
 	tokenList.forEach(token -> {
@@ -98,19 +84,5 @@ public class WordCount {
 			System.out.println(" " + tokenCount.get(index));
 			return null;
 		}).collect(Collectors.toList());
-	
-	
-	
-//	tokenUnic.sort(c);
-
-	/*for (int i = 0; i < sentenceBoundaries.length; ++i) {
-	    sentEndTok = sentenceBoundaries[i];
-	    System.out.println("SENTENCE "+(i+1)+": ");
-	    for (int j=sentStartTok; j<=sentEndTok; j++) {
-		System.out.print(tokens[j]+whites[j+1]);
-	    }
-	    System.out.println();
-	    sentStartTok = sentEndTok+1;
-	}*/
     }
 }
