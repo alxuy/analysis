@@ -80,8 +80,10 @@ public class PolarityBasic {
                         = mClassifier.classify(review);
                     if (classification.bestCategory().equals(category))
                         ++numCorrect;
-                    	System.out.print(review + " :");
+                    	System.out.println(review);
                     	System.out.println(classification.bestCategory());
+                    	System.out.println(classification.toString());
+                    	
                 }
             }
         }
