@@ -5,11 +5,8 @@ import com.aliasi.util.Files;
 import com.aliasi.classify.Classification;
 import com.aliasi.classify.Classified;
 import com.aliasi.classify.DynamicLMClassifier;
-import com.aliasi.classify.JointClassification;
-import com.aliasi.classify.JointClassifier;
 import com.aliasi.classify.JointClassifierEvaluator;
 
-import com.aliasi.lm.LanguageModel;
 import com.aliasi.lm.NGramProcessLM;
 
 import java.io.FileOutputStream;
