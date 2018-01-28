@@ -232,9 +232,7 @@ public class WordCount {
 
 		List<Word> wordList = new ArrayList<Word>();
 		tokenList.forEach(token -> {
-			Word word = wordList.stream().filter(c -> c.getWord().equals(token)).findFirst().orElse(null); // .get()
-																											// ||
-																											// Optional<Word>
+			Word word = wordList.stream().filter(c -> c.getWord().equals(token)).findFirst().orElse(null);
 			int index = -1;
 			if (word != null) {
 				index = wordList.indexOf(word);
