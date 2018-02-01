@@ -5,6 +5,7 @@ public class Word {
 	private String word;
 	private Integer count;
 	private Integer numberDocContain;
+	private Double tfIdf;
 
 	public Word(String word, int count) {
 		super();
@@ -44,5 +45,19 @@ public class Word {
 
 	public void setNumberDocContain(Integer numberDocContain) {
 		this.numberDocContain = numberDocContain;
+	}
+
+	public Double getTfIdf() {
+		return tfIdf;
+	}
+
+	public void setTfIdf(Double tfIdf) {
+		this.tfIdf = tfIdf;
+	}
+
+	@Override
+	public String toString() {
+		return "Word [word=" + word + ", count=" + count + ", numberDocContain=" + numberDocContain + ", tfIdf=" + tfIdf
+				+ "]";
 	}
 }
