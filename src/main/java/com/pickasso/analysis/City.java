@@ -1,9 +1,13 @@
 package com.pickasso.analysis;
 
+import static com.mongodb.client.model.Filters.eq;
+
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 
+import org.bson.Document;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -15,6 +19,9 @@ import com.aliasi.dict.DictionaryEntry;
 import com.aliasi.dict.ExactDictionaryChunker;
 import com.aliasi.dict.MapDictionary;
 import com.aliasi.tokenizer.IndoEuropeanTokenizerFactory;
+import com.mongodb.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 
 public class City {
 
@@ -56,13 +63,26 @@ public class City {
 
 		System.out.println("\nDICTIONARY\n" + dictionary);
 
-		String text = "des etudiants à Torcy et Précy-sur-Marne-tezji à Précy-sur-Marne et encore à Torcy et torcy";
-		System.out.println("\n\nTEXT=" + text);
+		MongoClient mongoClient = new MongoClient();
+		MongoDatabase database = mongoClient.getDatabase("test");
+		MongoCollection<Document> collection = database.getCollection("associations");
+		String associationName = "La Croix-rouge";
+		Document document = collection.find(eq("name", associationName)).first();
+		Document carenews = (Document) document.get("carenews");
+		ArrayList<Document> articleList = (ArrayList<Document>) carenews.get("articles");
 
-		chunk(dictionaryChunkerTT, text);
-		chunk(dictionaryChunkerTF, text);
-		chunk(dictionaryChunkerFT, text);
-		chunk(dictionaryChunkerFF, text);
+		// String text = "des etudiants à Torcy et Précy-sur-Marne-tezji à
+		// Précy-sur-Marne et encore à Torcy et torcy";
+		// System.out.println("\n\nTEXT=" + text);
+
+		articleList.forEach(article -> {
+			String text = article.getString("content");
+			System.out.println(text.toString());
+			chunk(dictionaryChunkerTT, text);
+			chunk(dictionaryChunkerTF, text);
+			chunk(dictionaryChunkerFT, text);
+			chunk(dictionaryChunkerFF, text);
+		});
 
 	}
 
