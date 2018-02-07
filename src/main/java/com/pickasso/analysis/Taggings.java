@@ -29,7 +29,6 @@ import com.mongodb.client.MongoDatabase;
 /** Use SentenceModel to find sentence boundaries in text */
 public class Taggings {
 
-	// private static List<String> tokenList = new ArrayList<String>();
 	private static Set<String> stopWordSet = new HashSet<String>();
 
 	private static void initiateStopWord() {
@@ -106,6 +105,41 @@ public class Taggings {
 		return wordList;
 	}
 
+	private static List<Word> sortByCount(List<Word> wordList) {
+		return wordList.stream().sorted((word1, word2) -> word2.getCount().compareTo(word1.getCount()))
+				.collect(Collectors.toList());
+	}
+
+	private static List<Word> sortByDocCount(List<Word> wordList) {
+		return wordList.stream().sorted((word1, word2) -> word2.getTfIdf().compareTo(word1.getTfIdf()))
+				.collect(Collectors.toList());
+	}
+
+	private static List<Word> countDocContainWord(List<Word> wordList, List<Document> articleList) {
+		List<Word> result = wordList.stream().map(word -> {
+			articleList.forEach(article -> {
+				String text = article.getString("content");
+				int index = -1;
+				index = text.indexOf(word.getWord());
+				if (index != -1) {
+					word.setNumberDocContain(word.getNumberDocContain() + 1);
+				}
+			});
+			return word;
+		}).collect(Collectors.toList());
+		return result;
+	}
+
+	private static List<Word> calculateTfIdf(List<Word> wordList, List<Document> articleList, List<String> tokenList) {
+		List<Word> result = wordList.stream().map(token -> {
+			double tf = ((double) token.getCount() / tokenList.size());
+			double idf = StrictMath.log(articleList.size() / token.getNumberDocContain());
+			token.setTfIdf(tf * idf);
+			return token;
+		}).collect(Collectors.toList());
+		return result;
+	}
+
 	public static void main(String[] args) throws IOException, ParseException {
 
 		initiateStopWord();
@@ -118,7 +152,7 @@ public class Taggings {
 		Document carenews = (Document) document.get("carenews");
 		Document ulule = (Document) document.get("Ulule");
 		mongoClient.close();
-		ArrayList<Document> articleList = (ArrayList<Document>) carenews.get("articles");
+		List<Document> articleList = (List<Document>) carenews.get("articles");
 
 		stopWordSet.addAll(tokenizeAssociationName(associationName, stopWordSet));
 
@@ -132,38 +166,13 @@ public class Taggings {
 
 		wordList = reduce(tokenList);
 
-		List<Word> result = wordList.stream().sorted((word1, word2) -> word2.getCount().compareTo(word1.getCount()))
-				.collect(Collectors.toList());
+		List<Word> result = sortByCount(wordList);
 
-		result = result.stream().map(word -> {
-			articleList.forEach(article -> {
-				String text = article.getString("content");
-				int index = -1;
-				index = text.indexOf(word.getWord());
-				if (index != -1) {
-					word.setNumberDocContain(word.getNumberDocContain() + 1);
-				}
-			});
-			return word;
-		}).collect(Collectors.toList());
+		result = countDocContainWord(result, articleList);
 
-		// result.stream().map(token -> {
-		// System.out.println(token.toString());
-		// // System.out.print(token.getWord());
-		// // System.out.println(" " + token.getCount());
-		// return null;
-		// }).collect(Collectors.toList());
+		result = calculateTfIdf(wordList, articleList, tokenList);
 
-		result = result.stream().map(token -> {
-			double tf = ((double) token.getCount() / tokenList.size());
-			double idf = StrictMath.log(articleList.size() / token.getNumberDocContain());
-			token.setTfIdf(tf * idf);
-			// System.out.println(token.toString());
-			return token;
-		}).collect(Collectors.toList());
-
-		List<Word> result2 = wordList.stream().sorted((word1, word2) -> word2.getTfIdf().compareTo(word1.getTfIdf()))
-				.collect(Collectors.toList());
+		List<Word> result2 = sortByDocCount(wordList);
 
 		result.forEach(word -> {
 			System.out.println(word.toString());
