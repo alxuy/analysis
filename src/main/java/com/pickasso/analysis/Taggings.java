@@ -2,9 +2,11 @@ package com.pickasso.analysis;
 
 import static com.mongodb.client.model.Filters.eq;
 
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -27,68 +29,66 @@ import com.mongodb.client.MongoDatabase;
 /** Use SentenceModel to find sentence boundaries in text */
 public class Taggings {
 
-	public static void main(String[] args) throws IOException, ParseException {
+	// private static List<String> tokenList = new ArrayList<String>();
+	private static Set<String> stopWordSet = new HashSet<String>();
 
-		// Pattern regex = Pattern.compile("(-|,|;|'|’|");
-		// TOKENIZER_FACTORY = new
-		// RegExFilteredTokenizerFactory(TOKENIZER_FACTORY,regex);
+	private static void initiateStopWord() {
+		try {
+			JSONParser parser = new JSONParser();
+			Object obj = parser.parse(new FileReader("resources/stopwords-fr.json"));
+			JSONArray jsonArray = (JSONArray) obj;
+			stopWordSet = (Set<String>) jsonArray.stream().collect(Collectors.toSet());
+			stopWordSet.add(".");
+			stopWordSet.add(",");
+			stopWordSet.add("-");
+			stopWordSet.add("’");
+			stopWordSet.add("'");
+			stopWordSet.add(";");
+			stopWordSet.add("«");
+			stopWordSet.add("»");
+			stopWordSet.add("\"");
+			stopWordSet.add("/");
+			stopWordSet.add("\\");
+			stopWordSet.add(":");
+			stopWordSet.add("(");
+			stopWordSet.add(")");
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
 
+	}
+
+	private static List<String> tokenize(String text, Set<String> stopWordSet) {
 		List<String> tokenList = new ArrayList<String>();
 		List<String> whiteList = new ArrayList<String>();
+		TokenizerFactory TOKENIZER_FACTORY = IndoEuropeanTokenizerFactory.INSTANCE;
+		TOKENIZER_FACTORY = new LowerCaseTokenizerFactory(TOKENIZER_FACTORY);
+		TOKENIZER_FACTORY = new WhitespaceNormTokenizerFactory(TOKENIZER_FACTORY);
+		TOKENIZER_FACTORY = new StopTokenizerFactory(TOKENIZER_FACTORY, stopWordSet);
+		TOKENIZER_FACTORY = new WhitespaceNormTokenizerFactory(TOKENIZER_FACTORY);
+		Tokenizer tokenizer = TOKENIZER_FACTORY.tokenizer(text.toCharArray(), 0, text.length());
+		tokenizer.tokenize(tokenList, whiteList);
+		return tokenList;
+	}
 
-		MongoClient mongoClient = new MongoClient();
-		MongoDatabase database = mongoClient.getDatabase("test");
-		MongoCollection<Document> collection = database.getCollection("associations");
-		String associationName = "La Croix-rouge";
-		Document document = collection.find(eq("name", associationName)).first();
-		Document carenews = (Document) document.get("carenews");
-		ArrayList<Document> articleList = (ArrayList<Document>) carenews.get("articles");
-		// Document article = articleList.get(0);
-		// String text = article.getString("content");
-		// Tokenizer tokenizer;
+	private static Set<String> tokenizeAssociationName(String text, Set<String> stopWordSet) {
+		List<String> tokenList = new ArrayList<String>();
+		List<String> whiteList = new ArrayList<String>();
+		TokenizerFactory TOKENIZER_FACTORY = IndoEuropeanTokenizerFactory.INSTANCE;
+		TOKENIZER_FACTORY = new LowerCaseTokenizerFactory(TOKENIZER_FACTORY);
+		TOKENIZER_FACTORY = new WhitespaceNormTokenizerFactory(TOKENIZER_FACTORY);
+		TOKENIZER_FACTORY = new StopTokenizerFactory(TOKENIZER_FACTORY, stopWordSet);
+		TOKENIZER_FACTORY = new WhitespaceNormTokenizerFactory(TOKENIZER_FACTORY);
+		Tokenizer tokenizer = TOKENIZER_FACTORY.tokenizer(text.toCharArray(), 0, text.length());
+		tokenizer.tokenize(tokenList, whiteList);
+		return tokenList.stream().collect(Collectors.toSet());
+	}
 
-		// BufferedReader reader = new BufferedReader(new
-		// FileReader("resources/stopwords-fr.txt"));
-		// Set<String> stopWordSet = new HashSet<String>();
-		// String line = null;
-		// while ((line = reader.readLine()) != null) {
-		// stopWordSet.add(line);
-		// }
-		// reader.close();
-
-		JSONParser parser = new JSONParser();
-		Object obj = parser.parse(new FileReader("resources/stopwords-fr.json"));
-		JSONArray jsonArray = (JSONArray) obj;
-		Set<String> stopWordSet = (Set<String>) jsonArray.stream().collect(Collectors.toSet());
-		stopWordSet.add(".");
-		stopWordSet.add(",");
-		stopWordSet.add("-");
-		stopWordSet.add("’");
-		stopWordSet.add("'");
-		stopWordSet.add(";");
-		stopWordSet.add("«");
-		stopWordSet.add("»");
-		stopWordSet.add("\"");
-		stopWordSet.add("/");
-		stopWordSet.add("\\");
-		stopWordSet.add(":");
-		stopWordSet.add("(");
-		stopWordSet.add(")");
-		// List<String> setword = stopWordSet.stream().sorted((word1, word2) ->
-		// word1.compareTo(word2))
-		// .collect(Collectors.toList());
-		articleList.forEach(article -> {
-			String text = article.getString("content");
-			TokenizerFactory TOKENIZER_FACTORY = IndoEuropeanTokenizerFactory.INSTANCE;
-			TOKENIZER_FACTORY = new LowerCaseTokenizerFactory(TOKENIZER_FACTORY);
-			TOKENIZER_FACTORY = new WhitespaceNormTokenizerFactory(TOKENIZER_FACTORY);
-			TOKENIZER_FACTORY = new StopTokenizerFactory(TOKENIZER_FACTORY, stopWordSet);
-			TOKENIZER_FACTORY = new WhitespaceNormTokenizerFactory(TOKENIZER_FACTORY);
-			Tokenizer tokenizer = TOKENIZER_FACTORY.tokenizer(text.toCharArray(), 0, text.length());
-			tokenizer.tokenize(tokenList, whiteList);
-		});
-		// tokenizer.tokenize(tokenList, whiteList);
-
+	private static List<Word> reduce(List<String> tokenList) {
 		List<Word> wordList = new ArrayList<Word>();
 		tokenList.forEach(token -> {
 			Word word = wordList.stream().filter(c -> c.getWord().equals(token)).findFirst().orElse(null);
@@ -103,6 +103,34 @@ public class Taggings {
 				wordList.add(new Word(token, 1, 1));
 			}
 		});
+		return wordList;
+	}
+
+	public static void main(String[] args) throws IOException, ParseException {
+
+		initiateStopWord();
+
+		MongoClient mongoClient = new MongoClient();
+		MongoDatabase database = mongoClient.getDatabase("test");
+		MongoCollection<Document> collection = database.getCollection("associations");
+		String associationName = "La Croix-rouge";
+		Document document = collection.find(eq("name", associationName)).first();
+		Document carenews = (Document) document.get("carenews");
+		Document ulule = (Document) document.get("Ulule");
+		mongoClient.close();
+		ArrayList<Document> articleList = (ArrayList<Document>) carenews.get("articles");
+
+		stopWordSet.addAll(tokenizeAssociationName(associationName, stopWordSet));
+
+		List<String> tokenList = new ArrayList<String>();
+		List<Word> wordList = new ArrayList<Word>();
+
+		articleList.forEach(article -> {
+			String text = article.getString("content");
+			tokenList.addAll(tokenize(text, stopWordSet));
+		});
+
+		wordList = reduce(tokenList);
 
 		List<Word> result = wordList.stream().sorted((word1, word2) -> word2.getCount().compareTo(word1.getCount()))
 				.collect(Collectors.toList());
@@ -147,6 +175,5 @@ public class Taggings {
 
 		System.out.println();
 		System.out.println(tokenList.size() + " TOKENS");
-		System.out.println(whiteList.size() + " WHITESPACES");
 	}
 }
