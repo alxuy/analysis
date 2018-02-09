@@ -19,6 +19,8 @@ import com.aliasi.dict.DictionaryEntry;
 import com.aliasi.dict.ExactDictionaryChunker;
 import com.aliasi.dict.MapDictionary;
 import com.aliasi.tokenizer.IndoEuropeanTokenizerFactory;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -90,14 +92,19 @@ public class City {
 		System.out.println("\nChunker." + " All matches=" + chunker.returnAllMatches() + " Case sensitive="
 				+ chunker.caseSensitive());
 		Chunking chunking = chunker.chunk(text);
+		GsonBuilder gsonBuilder = new GsonBuilder();
+		gsonBuilder.serializeSpecialFloatingPointValues();
+		Gson gson = gsonBuilder.create();
 		for (Chunk chunk : chunking.chunkSet()) {
 			int start = chunk.start();
 			int end = chunk.end();
 			String type = chunk.type();
 			double score = chunk.score();
 			String phrase = text.substring(start, end);
-			System.out.println("     phrase=|" + phrase + "|" + " start=" + start + " end=" + end + " type=" + type
-					+ " score=" + score);
+			System.out.println(gson.toJson(chunk));
+			// System.out.println(" phrase=|" + phrase + "|" + " start=" + start + " end=" +
+			// end + " type=" + type
+			// + " score=" + score);
 		}
 	}
 
