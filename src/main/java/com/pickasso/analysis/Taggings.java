@@ -22,6 +22,8 @@ import com.aliasi.tokenizer.StopTokenizerFactory;
 import com.aliasi.tokenizer.Tokenizer;
 import com.aliasi.tokenizer.TokenizerFactory;
 import com.aliasi.tokenizer.WhitespaceNormTokenizerFactory;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -174,8 +176,13 @@ public class Taggings {
 
 		List<Word> result2 = sortByDocCount(wordList);
 
+		GsonBuilder gsonBuilder = new GsonBuilder();
+		gsonBuilder.serializeSpecialFloatingPointValues();
+		Gson gson = gsonBuilder.create();
+
 		result.forEach(word -> {
-			System.out.println(word.toString());
+			System.out.println(gson.toJson(word));
+			// System.out.println(word.toString());
 		});
 
 		// result2.forEach(word -> {
