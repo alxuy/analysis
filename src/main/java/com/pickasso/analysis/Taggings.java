@@ -2,8 +2,10 @@ package com.pickasso.analysis;
 
 import static com.mongodb.client.model.Filters.eq;
 
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -156,6 +158,15 @@ public class Taggings {
 		mongoClient.close();
 		List<Document> articleList = (List<Document>) carenews.get("articles");
 
+		try {
+			FileWriter fw = new FileWriter("taggings.json", false);
+			fw.write("{\"associations\":{\"name\":\"" + associationName + "\",\"carenews\":{\"articles\":[");
+			fw.flush();
+			fw.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 		stopWordSet.addAll(tokenizeAssociationName(associationName, stopWordSet));
 
 		List<String> tokenList = new ArrayList<String>();
@@ -163,8 +174,70 @@ public class Taggings {
 
 		articleList.forEach(article -> {
 			String text = article.getString("content");
+			String title = article.getString("title");
+			title = title.replaceAll("\"", "\\\\\"");
+			String str = "{\"title\":\"" + title + "\",\"taggings\":[";
 			tokenList.addAll(tokenize(text, stopWordSet));
+			List<Word> alist = reduce(tokenList);
+
+			try {
+				FileWriter fw = new FileWriter("taggings.json", true);
+				fw.write(str);
+				fw.flush();
+				fw.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+			GsonBuilder gb = new GsonBuilder();
+			gb.serializeSpecialFloatingPointValues();
+			Gson g = gb.create();
+
+			alist.forEach(word -> {
+				try {
+					FileWriter fw = new FileWriter("taggings.json", true);
+					fw.write(g.toJson(word) + ",");
+					fw.flush();
+					fw.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			});
+
+			try {
+				FileReader fr = new FileReader("taggings.json");
+				BufferedReader br = new BufferedReader(fr);
+				String s = br.readLine();
+				if ((s.substring(s.length() - 1, s.length())).equals(",")) {
+					s = s.substring(0, s.length() - 1);
+				}
+				fr.close();
+
+				FileWriter fw = new FileWriter("taggings.json", false);
+				fw.write(s + "]},");
+				fw.flush();
+				fw.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		});
+
+		try {
+			FileReader fr = new FileReader("taggings.json");
+			BufferedReader br = new BufferedReader(fr);
+			String s = br.readLine();
+			if ((s.substring(s.length() - 1, s.length())).equals(",")) {
+				s = s.substring(0, s.length() - 1);
+			}
+			fr.close();
+
+			FileWriter fw = new FileWriter("taggings.json", false);
+			fw.write(s + "]}}}");
+			fw.flush();
+			fw.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		wordList = reduce(tokenList);
 
@@ -176,14 +249,49 @@ public class Taggings {
 
 		List<Word> result2 = sortByDocCount(wordList);
 
+		try {
+			FileWriter fw = new FileWriter("output.json", false);
+			fw.write("{\"associations\":{\"name\":\"" + associationName + "\",\"carenews\":{\"taggings\":[");
+			fw.flush();
+			fw.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 		GsonBuilder gsonBuilder = new GsonBuilder();
 		gsonBuilder.serializeSpecialFloatingPointValues();
 		Gson gson = gsonBuilder.create();
 
 		result.forEach(word -> {
-			System.out.println(gson.toJson(word));
+			try {
+				FileWriter fw = new FileWriter("output.json", true);
+				fw.write(gson.toJson(word) + ",");
+				fw.flush();
+				fw.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			gson.toJson(word);
+			// System.out.println(gson.toJson(word));
 			// System.out.println(word.toString());
 		});
+
+		try {
+			FileReader fr = new FileReader("output.json");
+			BufferedReader br = new BufferedReader(fr);
+			String s = br.readLine();
+			if ((s.substring(s.length() - 1, s.length())).equals(",")) {
+				s = s.substring(0, s.length() - 1);
+			}
+			fr.close();
+
+			FileWriter fw = new FileWriter("output.json", false);
+			fw.write(s + "]}}}");
+			fw.flush();
+			fw.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		// result2.forEach(word -> {
 		// System.out.println(word.toString());
