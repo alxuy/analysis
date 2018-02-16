@@ -76,7 +76,7 @@ public class City {
 		ArrayList<Document> articleList = (ArrayList<Document>) carenews.get("articles");
 
 		try {
-			FileWriter fw = new FileWriter("city.json", true);
+			FileWriter fw = new FileWriter("city.json", false);
 			fw.write("{\"associations\":{\"name\":\"" + associationName + "\",\"carenews\":{\"articles\":[");
 			fw.flush();
 			fw.close();
@@ -86,15 +86,16 @@ public class City {
 		articleList.forEach(article -> {
 			String text = article.getString("content");
 			String title = article.getString("title");
-			title = title.replaceAll("\"", "\\\\\"");
-			String str = "{\"title\":\"" + title + "\",\"city\":[";
+			Object id = article.get("_id");
+			// title = title.replaceAll("\"", "\\\\\"");
+			String str = "{\"id\":\"" + id + "\",\"city\":[";
 			str += chunk(dictionaryChunkerTT, text) + "]},";
 			chunk(dictionaryChunkerTF, text);
 			chunk(dictionaryChunkerFT, text);
 			chunk(dictionaryChunkerFF, text);
 
 			try {
-				FileWriter fw = new FileWriter("cifty.json", true);
+				FileWriter fw = new FileWriter("city.json", true);
 				fw.write(str);
 				fw.flush();
 				fw.close();
